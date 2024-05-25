@@ -10,14 +10,8 @@ exports.createUser = async (req,res) => {
         return res.status(409).json({status:"Already user exist"})
     }
 
-    // if(existUser.PHONE == mobile) {
-    //     return res.status(409).json({status:"Phone number already exist"})
-    // }
-
     let nowDate = new Date()
-
     let ID = await Customer.countDocuments();
-
     let encPwd = bcrypt.hashSync(password,5);
 
     try {
@@ -48,12 +42,64 @@ exports.createUser = async (req,res) => {
                 
                 Cheers,
                 Titanfitnessstudio`
-                messager(msg,mobile,"diet plan");
+                // messager(msg,mobile,"diet plan");
             }
             return res.json({status:"created",userID:ID+1}).status(200)
         }).
         catch((err) => {
             return res.json({status:"not created", err: err}.status(301));
+        })
+    }
+    catch(err){
+        return res.json({status:"error", err: err})
+    }
+}
+
+exports.edit = async(req,res) => {
+    const id = req.params.userId;
+    const {image,password, name, mobile, email, dob, address, refer, diet} = req.body;
+
+    const existUser = await Customer.findOne({_id:id});
+    if(!existUser) {
+        return res.status(409).json({status:"User does not exist"})
+    }
+
+    
+
+    let nowDate = new Date()
+    let ID = await Customer.countDocuments();
+    if(password)    
+        var encPwd = bcrypt.hashSync(password,5);
+
+    try {
+
+        Customer.findOneAndUpdate({_id:id},{
+            IMAGE_PATH: image ? image : existUser.image,
+            NAME: name ? name : existUser.name,
+            PHONE: mobile ? mobile : existUser.mobile,
+            EMAIL: email ? email : existUser.email,
+            DOB: dob ? dob : existUser.dob,
+            ADDRESS: address ? address : existUser.address,
+            PASSWORD:encPwd ? password : existUser.password,
+            LAST_MODIFIED_DATE:nowDate,
+            LAST_MODIFIED_BY:'admin',
+            GYM_PROFILE_ID:1,
+            STATUS:1
+        },{new:true}).
+        then((data) => {
+            if(diet){
+                let msg = `Hello ${user.NAME},
+                
+                Welcome aboard! Your account registration was successful. To kickstart your fitness journey, here’s your personalized diet plan: ${diet}. Let's achieve your goals together!
+                
+                Cheers,
+                Titanfitnessstudio`
+                // messager(msg,mobile,"diet plan");
+            }
+            return res.json({status:"updated"}).status(200)
+        }).
+        catch((err) => {
+            return res.json({status:"not updated", err: err}.status(301));
         })
     }
     catch(err){
@@ -139,7 +185,7 @@ We noticed that your payment is pending. To avoid any disruption to your access,
 Thank you,
 Titanfitnessstudio
         `
-        await messager(msg, user.PHONE, "non-active")
+        // await messager(msg, user.PHONE, "non-active")
         return res.json({status:`User ${user.NAME} has been non-active. And send a notification.`})
     });
 }
@@ -150,7 +196,7 @@ exports.active = async(req,res) => {
     if(user?.STATUS == 1) 
         return res.status(406).json({status:`User ${user.NAME} has already been active.`});
     await Customer.findOneAndUpdate({_id:userID},{STATUS:1}).then(async (user) => {
-        await messager("Your gym account has been active now. You can enjoy our gym services.", user.PHONE, "active")
+        // await messager("Your gym account has been active now. You can enjoy our gym services.", user.PHONE, "active")
         return res.json({status:`User ${user.NAME} has been active now. You can enjoy our gym services.`})
     });
 }
