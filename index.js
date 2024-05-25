@@ -1,6 +1,6 @@
 const express = require("express")
 const app = express()
-const {createUser, userList, user, userSearch, nonactive, active} = require('./Router/customer')
+const {createUser, userList, user, userSearch, nonactive, active, edit} = require('./Router/customer')
 const {db} = require("./Router/database")
 const {attendAt} = require("./Router/attendance")
 const { intime,outTime } = require("./Router/punch")
@@ -47,5 +47,7 @@ app.post("/admin/user/new",authAdmin, admin)
 app.get("/customer/dashboard", authCustomer, dashboard)
 app.get("/customer/payment", authCustomer, paymentofUser)
 app.get("/customer/punch", authCustomer, punch)
+app.patch("/admin/user/edit/:userId",authAdmin, edit);
+app.patch("/customer/edit/:userId", authCustomer, edit);
 
 app.listen(8080,() => {console.log("Server started")})
