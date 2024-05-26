@@ -132,10 +132,10 @@ exports.user = async(req,res) => {
 }
 
 exports.userSearch = async(req,res) => {
-    let {customerID, name, mobile, dob, memberID} = req.query;
+    let {customerID, name, mobile, dob, userID} = req.query;
 
-    if(memberID) {
-        const User = await Customer.findOne({ID:memberID});
+    if(userID) {
+        const User = await Customer.findOne({ID:userID});
         if(!User) 
             return res.status(404).json({user:"Not found"})
         return res.status(200).json({user:User})
