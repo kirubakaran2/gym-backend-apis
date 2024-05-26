@@ -1,15 +1,17 @@
 const express = require("express")
+const cors = require("cors");
 const app = express()
 const {createUser, userList, user, userSearch, nonactive, active, edit} = require('./Router/customer')
 const {db} = require("./Router/database")
 const {attendAt} = require("./Router/attendance")
-const { intime,outTime } = require("./Router/punch")
+const { intime,outTime, getIn, getOut } = require("./Router/punch")
 const {paymentAt, payment,paymentOf, paymentEdit} = require("./Router/payment")
 const {login, admin} = require("./Router/authentication")
 const {authAdmin, authCustomer} = require("./middleware/auth")
 const {dashboard,paymentofUser, punch} = require("./Router/dashboard")
 const {specialoff} = require("./Router/offer")
 app.use(express.json())
+app.use(cors({origin:"*"}));
 
 // Database manage
 db();
@@ -30,6 +32,8 @@ app.post("/admin/attendance", authAdmin, attendAt)
 app.post("/admin/time/in", authAdmin, intime )
 app.post('/admin/time/out', authAdmin, outTime )
 
+app.get("/admin/punch/in", authAdmin, getIn);
+app.get("/admin/punch/out", authAdmin, getOut);
 
 app.post("/admin/user/non-active", authAdmin, nonactive)
 app.post("/admin/user/active", authAdmin, active)
