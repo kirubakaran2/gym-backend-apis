@@ -10,8 +10,8 @@ exports.messager = async (body, to, reason) => {
     try {
         const message = await client.messages.create({
             body: body,
-            from: phone,
-            to: `+91${to}`
+            from: `whatsapp:${phone}`,
+            to: `whatsapp:+91${to}`
         });
 
         const record = new Message({

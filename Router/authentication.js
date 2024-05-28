@@ -7,6 +7,7 @@ require("dotenv").config();
 
 exports.login = async(req,res) => {
     let {email,password} = req.body;
+    console.log(email,password);
     let secret = process.env.SECRET || '12345'
     try {
         const admin = await Admin.findOne({EMAIL:email});
@@ -44,7 +45,7 @@ exports.login = async(req,res) => {
         }
     }
     catch(err) {
-        return res.status(500).json({status:"Internal Server Error."})
+        return res.status(500).json({status:"Internal Server Error.",error:err})
     }
 }
 

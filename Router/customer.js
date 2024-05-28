@@ -1,4 +1,6 @@
 const Customer = require("../Schema/customer");
+const Payment = require("../Schema/payment")
+const Punch = require("../Schema/punch")
 const {messager} = require("./sender")
 const bcrypt = require("bcryptjs")
 
@@ -109,8 +111,25 @@ exports.edit = async(req,res) => {
 
 exports.userList = async(req,res) => {
     try {
-        const User = await Customer.find({});
-        return res.status(200).json({users: User});
+        let today = new Date();
+        const User = await Customer.find({},{PASSWORD:0,STATUS:0,CREATED_BY:0,CREATED_DATE:0,LAST_MODIFIED_BY:0,LAST_MODIFIED_DATE:0,REFERENCE:0});
+        const payment = await Payment.find({
+            $expr: {
+                $and: [
+                    { $eq: [{ $month: "$PAYMENT_DATE" }, today.getMonth() + 1] },
+                    { $eq: [{ $year: "$PAYMENT_DATE"}, today.getUTCFullYear()]}
+                ]
+            }
+        });
+        const punch = await Punch.find({
+            $expr: {
+                $and: [
+                    { $eq: [{ $month: "$CREATED_DATE" }, today.getMonth() + 1] },
+                    { $eq: [{ $year: "$CREATED_DATE"}, today.getUTCFullYear()]}
+                ]
+            }
+        });
+        return res.status(200).json({users: User,payment:payment,punch:punch});
     }
     catch(err) {
         return res.status(500).json({status:"Something went wrong", error: err});
