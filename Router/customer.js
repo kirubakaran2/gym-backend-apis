@@ -108,28 +108,13 @@ exports.edit = async(req,res) => {
         return res.json({status:"error", err: err})
     }
 }
-
+ 
 exports.userList = async(req,res) => {
     try {
         let today = new Date();
         const User = await Customer.find({},{PASSWORD:0,STATUS:0,CREATED_BY:0,CREATED_DATE:0,LAST_MODIFIED_BY:0,LAST_MODIFIED_DATE:0,REFERENCE:0});
-        const payment = await Payment.find({
-            $expr: {
-                $and: [
-                    { $eq: [{ $month: "$PAYMENT_DATE" }, today.getMonth() + 1] },
-                    { $eq: [{ $year: "$PAYMENT_DATE"}, today.getUTCFullYear()]}
-                ]
-            }
-        });
-        const punch = await Punch.find({
-            $expr: {
-                $and: [
-                    { $eq: [{ $month: "$CREATED_DATE" }, today.getMonth() + 1] },
-                    { $eq: [{ $year: "$CREATED_DATE"}, today.getUTCFullYear()]}
-                ]
-            }
-        });
-        return res.status(200).json({users: User,payment:payment,punch:punch});
+
+        return res.status(200).json({users:User});
     }
     catch(err) {
         return res.status(500).json({status:"Something went wrong", error: err});
@@ -152,12 +137,30 @@ exports.user = async(req,res) => {
 
 exports.userSearch = async(req,res) => {
     let {customerID, name, mobile, dob, userID} = req.query;
-
+    let today = new Date();
     if(userID) {
         const User = await Customer.findOne({ID:userID});
         if(!User) 
             return res.status(404).json({user:"Not found"})
-        return res.status(200).json({user:User})
+        const payment = await Payment.find({
+            CUSTOMER_PROFILE_ID:userID,
+            $expr: {
+                $and: [
+                    { $eq: [{ $month: "$PAYMENT_DATE" }, today.getMonth() + 1] },
+                    { $eq: [{ $year: "$PAYMENT_DATE"}, today.getUTCFullYear()]}
+                ]
+            }
+        });
+        const punch = await Punch.find({
+            CUSTOMER_PROFILE_ID: userID,
+            $expr: {
+                $and: [
+                    { $eq: [{ $month: "$CREATED_DATE" }, today.getMonth() + 1] },
+                    { $eq: [{ $year: "$CREATED_DATE"}, today.getUTCFullYear()]}
+                ]
+            }
+        });
+        return res.status(200).json({user:User,payment:payment,punch:punch})
     }
 
     if(!name && !mobile && !dob) {

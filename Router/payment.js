@@ -124,7 +124,7 @@ exports.payment = async(req,res) => {
 
 exports.paymentEdit = async(req,res) => {
     let {id,amount,end,balance} = req.body;
-    if(!id || !amount || !end || !balance) {
+    if(!id || !amount || !end || balance===undefined) {
         return res.status(404).json({status:"All the fields are required like customer id, amount, payment type, effective date, end date and balance."})
     }
 
