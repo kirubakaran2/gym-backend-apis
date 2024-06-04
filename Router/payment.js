@@ -139,12 +139,14 @@ exports.paymentEdit = async(req,res) => {
         let PrevMonth = TimeNextMonth(now);
 
         let tmp = await Payment.find({CUSTOMER_PROFILE_ID:id, PAYMENT_DATE: { $gte: thisMonth, $lte: PrevMonth}});
-
+        if(tmp.length==0) {
+            return res.status(404).json({status:"No payment details"})
+        }
         if(tmp.length > 1) {
             return res.status(301).json({status:`So many payment added for this ${id}. So can't edit for this user.`})
         }
 
-        await Payment.findOneAndUpdate({CUSTOMER_PROFILE_ID:id, PAYMENT_DATE: { $gte: thisMonth, $lte: PrevMonth}}, { $inc: {PAYMENT_AMOUNT: amount}, END_DATE:end, $dec : {PAYMENT_BALANCE:balance}},{new:true})
+        await Payment.findOneAndUpdate({CUSTOMER_PROFILE_ID:id, PAYMENT_DATE: { $gte: thisMonth, $lte: PrevMonth}}, { PAYMENT_AMOUNT: amount, END_DATE:end, $dec : {PAYMENT_BALANCE:balance}},{new:true})
         .then((data) => {
             return res.status(200).json({status:`Payment edited for this user ${id}`, payment: data})
         }).catch((err) => {
@@ -172,4 +174,11 @@ exports.paymentOf = async(req,res) => {
     if(!payment)
         return res.status(404).json({status:"No payment on this month for the user."})
     return res.status(200).json({payment:payment});
+}
+
+exports.delPay = async(req,res) => {
+    let {_id} = req.params;
+    await Payment.findOneAndDelete({_id:_id}).then(() => {
+        return res.status(200).json({status:"Deleted"})
+    }).catch(() => {return res.status(500).json({status:"Internal Server Error"})})
 }
