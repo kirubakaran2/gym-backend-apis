@@ -23,6 +23,8 @@ exports.intime = async(req,res) => {
 
     const UserPunch = new punch({
         CUSTOMER_PROFILE_ID: id,
+        CUSTOMER_NAME:user.NAME,
+        PHONE:user.PHONE,
         IN_TIME: now,
         OUT_TIME:null,
         SLOT:"",

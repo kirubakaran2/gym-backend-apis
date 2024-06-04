@@ -1,7 +1,7 @@
 const express = require("express")
 const cors = require("cors");
 const app = express()
-const {createUser, userList, user, userSearch, nonactive, active, edit} = require('./Router/customer')
+const {createUser, userList, user, userSearch, nonactive, active, edit, Admindashboard} = require('./Router/customer')
 const {db} = require("./Router/database")
 const {attendAt} = require("./Router/attendance")
 const { intime,outTime, getIn, getOut } = require("./Router/punch")
@@ -22,6 +22,7 @@ app.get("/testing", (req,res) => res.json({status:"GYM APIs working fine."}).sta
 // User APIs
 app.post("/admin/user/create", authAdmin, createUser);
 app.get("/admin/user", authAdmin, userList)
+app.get("/admin/dashboard", authAdmin, Admindashboard)
 app.get("/admin/user/searching", authAdmin, userSearch)
 app.get("/admin/user/:userID", authAdmin, user)
 

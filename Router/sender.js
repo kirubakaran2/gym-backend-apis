@@ -4,7 +4,6 @@ let accountSid = process.env.SID;
 let phone = process.env.PHONE;
 const Message = require("../Schema/messages")
 
-const client = require('twilio')(accountSid, authToken);
 
 exports.messager = async (body, to, reason) => {
     try {

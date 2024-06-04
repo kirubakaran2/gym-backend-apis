@@ -111,8 +111,18 @@ exports.edit = async(req,res) => {
  
 exports.userList = async(req,res) => {
     try {
-        let today = new Date();
         const User = await Customer.find({},{PASSWORD:0,STATUS:0,CREATED_BY:0,CREATED_DATE:0,LAST_MODIFIED_BY:0,LAST_MODIFIED_DATE:0,REFERENCE:0});
+
+        return res.status(200).json({users:User});
+    }
+    catch(err) {
+        return res.status(500).json({status:"Something went wrong", error: err});
+    }
+}
+
+exports.Admindashboard = async(req,res) => {
+    try {
+        const User = await Customer.find({},{PASSWORD:0});
 
         return res.status(200).json({users:User});
     }
