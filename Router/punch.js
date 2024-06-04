@@ -41,7 +41,7 @@ exports.intime = async(req,res) => {
     
         Keep pushing,
         Titanfitnessstudio`
-        // messager(msg,user.PHONE,'in time entry message.')
+        messager(msg,user.PHONE,'in time entry message.')
         return res.status(200).json({status:"In time entried."})
     }).
     catch(() => {

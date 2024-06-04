@@ -217,7 +217,7 @@ We noticed that your payment is pending. To avoid any disruption to your access,
 Thank you,
 Titanfitnessstudio
         `
-        // await messager(msg, user.PHONE, "non-active")
+        await messager(msg, user.PHONE, "non-active")
         return res.json({status:`User ${user.NAME} has been non-active. And send a notification.`})
     });
 }
@@ -228,7 +228,7 @@ exports.active = async(req,res) => {
     if(user?.STATUS == 1) 
         return res.status(406).json({status:`User ${user.NAME} has already been active.`});
     await Customer.findOneAndUpdate({_id:userID},{STATUS:1}).then(async (user) => {
-        // await messager("Your gym account has been active now. You can enjoy our gym services.", user.PHONE, "active")
+        await messager("Your gym account has been active now. You can enjoy our gym services.", user.PHONE, "active")
         return res.json({status:`User ${user.NAME} has been active now. You can enjoy our gym services.`})
     });
 }
