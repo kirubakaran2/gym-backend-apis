@@ -4,13 +4,14 @@ let accountSid = process.env.SID;
 let phone = process.env.PHONE;
 const Message = require("../Schema/messages")
 
+const client = require('twilio')(accountSid, authToken);
 
 exports.messager = async (body, to, reason) => {
     try {
         const message = await client.messages.create({
             body: body,
-            from: `whatsapp:${phone}`,
-            to: `whatsapp:+91${to}`
+            from: `${phone}`,
+            to: `+91${to}`
         });
 
         const record = new Message({
