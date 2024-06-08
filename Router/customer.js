@@ -44,7 +44,7 @@ exports.createUser = async (req,res) => {
                 
                 Cheers,
                 Titanfitnessstudio`
-                // messager(msg,mobile,"diet plan");
+                messager(msg,mobile,"diet plan");
             }
             return res.json({status:"created",userID:ID+1}).status(200)
         }).
