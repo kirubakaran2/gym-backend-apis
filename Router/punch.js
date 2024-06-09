@@ -32,11 +32,10 @@ exports.intime = async(req,res) => {
         CREATED_BY:"",
         CREATED_DATE: now
     });
-
     UserPunch.save().
     then(() => {
+        a = new Date().toLocaleString();
         let msg = `Hi ${user.NAME},
-        
         Great to see you! You’ve punched in for your workout session at ${a.getHours()}:${a.getMinutes()}. Remember, you have 1 hour to crush your goals. Let’s make it count!
     
         Keep pushing,
