@@ -34,9 +34,11 @@ exports.intime = async(req,res) => {
     });
     UserPunch.save().
     then(() => {
-        a = new Date().toLocaleString();
+        a = new Date()
+        let hours = a.getHours() + 5 + parseInt((a.getMinutes+30)/60);
+        let min = (a.getMinutes() + 30)%60;
         let msg = `Hi ${user.NAME},
-        Great to see you! You’ve punched in for your workout session at ${a.getHours()}:${a.getMinutes()}. Remember, you have 1 hour to crush your goals. Let’s make it count!
+        Great to see you! You’ve punched in for your workout session at ${hours}:${min}. Remember, you have 1 hour to crush your goals. Let’s make it count!
     
         Keep pushing,
         Titanfitnessstudio`
