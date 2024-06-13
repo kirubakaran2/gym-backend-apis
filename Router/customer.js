@@ -4,22 +4,27 @@ const Punch = require("../Schema/punch")
 const {messager} = require("./sender")
 const bcrypt = require("bcryptjs")
 
-exports.createUser = async (req,res) => {
-    const {image,password, name, mobile, email, dob, address, refer, diet} = req.body;
 
+exports.createUser = async (req,res) => {
+    let {password, name, mobile, email, dob, address, refer, diet} = req.body;
+    
     const existUser = await Customer.findOne({EMAIL:email});
     if(existUser) {
         return res.status(409).json({status:"Already user exist"})
     }
 
     let nowDate = new Date()
-    let ID = await Customer.countDocuments();
-    let encPwd = bcrypt.hashSync(password,5);
+    let oldUser = await Customer.find({}).sort({_id:-1}).limit(1);
+    let ID = oldUser[0]?.ID;
+    
+    password = password===undefined ? '1234' : password
 
+    let encPwd = bcrypt.hashSync(password,5);
+    const imagePath = req.file ? `image/${req.file.filename}` : null;
     try {
         const user = await Customer({
             ID: ID+1,
-            IMAGE_PATH: image,
+            IMAGE_PATH: imagePath,
             NAME: name,
             PHONE: mobile,
             EMAIL: email,
@@ -49,7 +54,7 @@ exports.createUser = async (req,res) => {
             return res.json({status:"created",userID:ID+1}).status(200)
         }).
         catch((err) => {
-            return res.json({status:"not created", err: err}.status(301));
+            return res.status(301).json({status:"not created", err: err});
         })
     }
     catch(err){
@@ -61,47 +66,36 @@ exports.edit = async(req,res) => {
     const id = req.params.userId;
     const {image,password, name, mobile, email, dob, address, refer, diet} = req.body;
 
-    const existUser = await Customer.findOne({_id:id});
+    const existUser = await Customer.findOne({ID:id});
     if(!existUser) {
         return res.status(409).json({status:"User does not exist"})
     }
 
-    
-
     let nowDate = new Date()
-    let ID = await Customer.countDocuments();
     if(password)    
         var encPwd = bcrypt.hashSync(password,5);
 
     try {
 
-        Customer.findOneAndUpdate({_id:id},{
-            IMAGE_PATH: image ? image : existUser.image,
-            NAME: name ? name : existUser.name,
-            PHONE: mobile ? mobile : existUser.mobile,
-            EMAIL: email ? email : existUser.email,
-            DOB: dob ? dob : existUser.dob,
-            ADDRESS: address ? address : existUser.address,
-            PASSWORD:encPwd ? password : existUser.password,
+        Customer.findOneAndUpdate({ID:id},{
+            IMAGE_PATH: image ? image : existUser.IMAGE_PATH,
+            NAME: name ? name : existUser.NAME,
+            PHONE: mobile ? mobile : existUser.PHONE,
+            EMAIL: email ? email : existUser.EMAIL,
+            DOB: dob ? dob : existUser.DOB,
+            ADDRESS: address ? address : existUser.ADDRESS,
+            PASSWORD:encPwd ? password : existUser.PASSWORD,
             LAST_MODIFIED_DATE:nowDate,
             LAST_MODIFIED_BY:'admin',
+            REFERENCE: refer ? refer : existUser.REFERENCE,
             GYM_PROFILE_ID:1,
             STATUS:1
         },{new:true}).
         then((data) => {
-            if(diet){
-                let msg = `Hello ${user.NAME},
-                
-                Welcome aboard! Your account registration was successful. To kickstart your fitness journey, here’s your personalized diet plan: ${diet}. Let's achieve your goals together!
-                
-                Cheers,
-                Titanfitnessstudio`
-                // messager(msg,mobile,"diet plan");
-            }
             return res.json({status:"updated"}).status(200)
         }).
         catch((err) => {
-            return res.json({status:"not updated", err: err}.status(301));
+            return res.status(301).json({status:"not updated", err: err});
         })
     }
     catch(err){
@@ -134,7 +128,7 @@ exports.Admindashboard = async(req,res) => {
 exports.user = async(req,res) => {
     const {userID} = req.params;
     try {
-        const User = await Customer.findOne({_id:userID});
+        const User = await Customer.findOne({ID:userID});
         if(!User) {
             return res.status(404).json({user:"User not found"})
         }

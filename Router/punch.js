@@ -32,13 +32,12 @@ exports.intime = async(req,res) => {
         CREATED_BY:"",
         CREATED_DATE: now
     });
+
     UserPunch.save().
     then(() => {
-        a = new Date()
-        let hours = a.getHours() + 5 + parseInt((a.getMinutes()+30)/60);
-        let min = (a.getMinutes() + 30)%60;
         let msg = `Hi ${user.NAME},
-        Great to see you! You’ve punched in for your workout session at ${hours}:${min}. Remember, you have 1 hour to crush your goals. Let’s make it count!
+        
+        Great to see you! You’ve punched in for your workout session at ${a.getHours()}:${a.getMinutes()}. Remember, you have 1 hour to crush your goals. Let’s make it count!
     
         Keep pushing,
         Titanfitnessstudio`
@@ -152,5 +151,47 @@ exports.getOut = async(req,res) => {
     }
     catch(err) {
         return res.status(500).json({status:"Internal Server Error"})
+    }
+}
+
+exports.attendance = async(req,res) => {
+    let {page,date} = req.query;
+
+    page = page === undefined ? 0 : page*50;
+    const customer = await Customer.find({},{PASSWORD:0},{skip:page,limit:50}).sort({ID:"asc"});
+    let customers = new Array();
+    try {
+        let today = new Date();
+        if(date) {
+            today = new Date(date);
+        }
+        for(let user of customer) {
+            let timing = await punch.findOne({CUSTOMER_PROFILE_ID:user.ID,
+                $expr: {
+                    $and: [
+                        { $eq: [{ $dayOfMonth: "$CREATED_DATE" }, today.getDate()] },
+                        { $eq: [{ $month: "$CREATED_DATE" }, today.getMonth() + 1] },
+                        { $eq: [{ $year: "$CREATED_DATE"}, today.getUTCFullYear()]}
+                    ]
+                }
+            });
+            let details = {
+                ID: user.ID,
+                NAME: user.NAME,
+                DOB: user.DOB,
+                PHONE: user.PHONE,
+                EMAIL: user.EMAIL,
+                ADDRESS: user.ADDRESS,
+                IMAGE_PATH: user.IMAGE_PATH,
+                IN_TIME: timing===null?null:timing.IN_TIME,
+                OUT_TIME: timing===null?null:timing.OUT_TIME,
+                ATTENDANCE: timing === null ? 'absent' : 'present'
+            }
+            customers.push(details);
+        }
+        return res.status(200).json({customer:customers});
+    }
+    catch(e) {
+        return res.status(500).json({status:"Something went wrong",error:e});
     }
 }

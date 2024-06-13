@@ -96,8 +96,8 @@ exports.payment = async(req,res) => {
         let PrevMonth = TimeNextMonth(now);
         
         let tmp = await Payment.find({CUSTOMER_PROFILE_ID:id, PAYMENT_DATE: { $gte: thisMonth, $lte: PrevMonth}});
-
-        if(tmp.length > 1) {
+        console.log(tmp.length) 
+        if(tmp.length > 0) {
             return res.status(301).json({status:`So many payment added for this ${id}. So can't add for this user, but you can edit the detail of the user payment.`})
         }
 
@@ -146,7 +146,7 @@ exports.paymentEdit = async(req,res) => {
             return res.status(301).json({status:`So many payment added for this ${id}. So can't edit for this user.`})
         }
 
-        await Payment.findOneAndUpdate({CUSTOMER_PROFILE_ID:id, PAYMENT_DATE: { $gte: thisMonth, $lte: PrevMonth}}, { PAYMENT_AMOUNT: amount, END_DATE:end, $dec : {PAYMENT_BALANCE:balance}},{new:true})
+        await Payment.findOneAndUpdate({CUSTOMER_PROFILE_ID:id, PAYMENT_DATE: { $gte: thisMonth, $lte: PrevMonth}}, { PAYMENT_AMOUNT: amount, END_DATE:end, PAYMENT_BALANCE:balance},{new:true})
         .then((data) => {
             return res.status(200).json({status:`Payment edited for this user ${id}`, payment: data})
         }).catch((err) => {
@@ -181,4 +181,57 @@ exports.delPay = async(req,res) => {
     await Payment.findOneAndDelete({_id:_id}).then(() => {
         return res.status(200).json({status:"Deleted"})
     }).catch(() => {return res.status(500).json({status:"Internal Server Error"})})
+}
+
+
+exports.paymentOfAll = async(req,res) => {
+    let {page,date} = req.query;
+    page = page === undefined ? 0 : page*50;
+    const customer = await Customer.find({},{PASSWORD:0},{skip:page,limit:50}).sort({ID:"asc"});
+    let customers = new Array();
+    try {
+        let now = new Date();
+        if(date) now = new Date(date);
+        let thisMonth = TimeMonth(now);
+        let PrevMonth = TimeNextMonth(now);
+        for(let user of customer) {
+            let pay = await Payment.findOne({CUSTOMER_PROFILE_ID:user.ID, PAYMENT_DATE: { $gte: thisMonth, $lte: PrevMonth}});
+            if(pay) {
+                let details = {
+                    ID: user.ID,
+                    NAME: user.NAME,
+                    DOB: user.DOB,
+                    PHONE: user.PHONE,
+                    EMAIL: user.EMAIL,
+                    ADDRESS: user.ADDRESS,
+                    IMAGE_PATH: user.IMAGE_PATH,
+                    PAYMENT_STATUS:"Paid",
+                    PAYMENT_TYPE: pay?.PAYMENT_TYPE,
+                    PAYMENT_AMOUNT: pay?.PAYMENT_AMOUNT,
+                    EFFECTIVE_DATE: pay?.EFFECTIVE_DATE,
+                    END_DATE: pay?.END_DATE,
+                    PAYMENT_DATE: pay?.PAYMENT_DATE,
+                    PAYMENT_BALANCE: pay?.PAYMENT_BALANCE
+                }
+                customers.push(details);
+            }
+            else {
+                let details = {
+                    ID: user.ID,
+                    NAME: user.NAME,
+                    DOB: user.DOB,
+                    PHONE: user.PHONE,
+                    EMAIL: user.EMAIL,
+                    ADDRESS: user.ADDRESS,
+                    IMAGE_PATH: user.IMAGE_PATH,
+                    PAYMENT_STATUS:"Not paid"
+                }
+                customers.push(details);
+            }
+        }
+        return res.status(200).json({customer:customers});
+    }
+    catch(e) {
+        return res.status(500).json({status:"Something went wrong"});
+    }
 }
