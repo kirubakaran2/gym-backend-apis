@@ -104,7 +104,7 @@ app.post("/admin/user/new",authAdmin, admin)
 app.get("/customer/dashboard", authCustomer, dashboard)
 app.get("/customer/payment", authCustomer, paymentofUser)
 app.get("/customer/punch", authCustomer, punch)
-app.patch("/admin/user/edit/:userId",authAdmin, edit);
-app.patch("/customer/edit/:userId", authCustomer, edit);
+app.patch("/admin/user/edit/:userId",authAdmin,upload.single('image'), edit);
+app.patch("/customer/edit/:userId", authCustomer,upload.single('image'), edit);
 
 app.listen(8080,() => {console.log("Server started")})
