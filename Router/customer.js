@@ -71,6 +71,8 @@ exports.edit = async(req,res) => {
         return res.status(409).json({status:"User does not exist"})
     }
 
+    const imagePath = req.file ? `image/${req.file.filename}` : null;
+
     let nowDate = new Date()
     if(password)    
         var encPwd = bcrypt.hashSync(password,5);
@@ -78,7 +80,7 @@ exports.edit = async(req,res) => {
     try {
 
         Customer.findOneAndUpdate({ID:id},{
-            IMAGE_PATH: image ? image : existUser.IMAGE_PATH,
+            IMAGE_PATH: imagePath!==null ? imagePath : existUser.IMAGE_PATH,
             NAME: name ? name : existUser.NAME,
             PHONE: mobile ? mobile : existUser.PHONE,
             EMAIL: email ? email : existUser.EMAIL,
