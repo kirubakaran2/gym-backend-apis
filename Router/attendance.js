@@ -1,30 +1,176 @@
-const Customer = require("../Schema/customer")
-const punch = require("../Schema/punch")
-const { user } = require("./customer")
-
-function TimeZoneFormat(now) {
-    let year = now.getFullYear()
-    let month = now.getMonth() + 1
-    let date = now.getDate() + 1
-    now = `${year}-${month}-${date}`
-    return now
+const Customer = require("../Schema/customer");
+const punch = require("../Schema/punch");
+function formatDate(date) {
+    let year = date.getFullYear();
+    let month = date.getMonth() + 1;
+    let day = date.getDate();
+    return `${year}-${month}-${day}`;
+}
+function getNoonTime(date) {
+    let noon = new Date(date);
+    noon.setHours(12, 0, 0, 0);
+    return noon;
 }
 
-function TimeZoneFormatOfNextDate(now) {
-    let year = now.getFullYear()
-    let month = now.getMonth() + 1
-    let date = now.getDate() + 2
-    now = `${year}-${month}-${date}`
-    return now
-}
+exports.morningAttendance = async (req, res) => {
+    try {
+        let { date, page = 1, limit = 100 } = req.query; 
+        limit = parseInt(limit);
+        page = parseInt(page);
 
-function CalculateDuration(inTime,outTime) {
-    let duration = outTime.getTime() - inTime.getTime()
+        if (!date) {
+            date = new Date();
+        } else {
+            date = new Date(date);
+        }
 
-    let hr = Math.floor(duration / (1000*60*60))
-    let min = Math.floor( (duration % (1000*60*60)) / (1000*60) ) 
-    return `${hr}:${min}`
-}
+        let nextDate = new Date(date);
+        nextDate.setDate(nextDate.getDate() + 1);
+
+        // Calculate the total count of UserPunch
+        const totalCount = await punch.countDocuments({
+            IN_TIME: { $gte: formatDate(date), $lt: getNoonTime(date) }
+        });
+
+        // Get the paginated results
+        const UserPunch = await punch.find({
+            IN_TIME: { $gte: formatDate(date), $lt: getNoonTime(date) }
+        })
+        .skip((page - 1) * limit)
+        .limit(limit);
+
+        if (!UserPunch || UserPunch.length === 0) {
+            return res.status(200).json({ user: "No users present in the morning." });
+        }
+
+        let users = [];
+        for (const userPunch of UserPunch) {
+            let customer = await Customer.findOne({ ID: userPunch.CUSTOMER_PROFILE_ID });
+            if (customer) {
+                users.push({
+                    ID: customer.ID,
+                    NAME: customer.NAME,
+                    PHONE: customer.PHONE,
+                    IN_TIME: userPunch.IN_TIME,
+                    OUT_TIME: userPunch.OUT_TIME
+                });
+            }
+        }
+
+        return res.status(200).json({
+            user: users,
+            totalCount,
+            currentPage: page,
+            totalPages: Math.ceil(totalCount / limit)
+        });
+    } catch (err) {
+        return res.status(500).json({ user: "Internal Server Error", err: err });
+    }
+};
+
+exports.eveningAttendance = async (req, res) => {
+    try {
+        let { date, page = 1, limit = 100 } = req.query;
+        limit = parseInt(limit);
+        page = parseInt(page);
+
+        if (!date) {
+            date = new Date();
+        } else {
+            date = new Date(date);
+        }
+
+        let noonTime = getNoonTime(date);
+        let nextDate = new Date(date);
+        nextDate.setDate(nextDate.getDate() + 1);
+        const totalCount = await punch.countDocuments({
+            IN_TIME: { $gte: noonTime, $lt: nextDate }
+        });
+        const UserPunch = await punch.find({
+            IN_TIME: { $gte: noonTime, $lt: nextDate }
+        })
+        .skip((page - 1) * limit)
+        .limit(limit);
+
+        if (!UserPunch || UserPunch.length === 0) {
+            return res.status(200).json({ user: "No users present in the evening." });
+        }
+
+        let users = [];
+        for (const userPunch of UserPunch) {
+            let customer = await Customer.findOne({ ID: userPunch.CUSTOMER_PROFILE_ID });
+            if (customer) {
+                users.push({
+                    ID: customer.ID,
+                    NAME: customer.NAME,
+                    PHONE: customer.PHONE,
+                    IN_TIME: userPunch.IN_TIME,
+                    OUT_TIME: userPunch.OUT_TIME
+                });
+            }
+        }
+
+        return res.status(200).json({
+            user: users,
+            totalCount, 
+            currentPage: page,
+            totalPages: Math.ceil(totalCount / limit)
+        });
+    } catch (err) {
+        return res.status(500).json({ user: "Internal Server Error", err: err });
+    }
+};
+
+exports.monthlyAttendance = async (req, res) => {
+    try {
+        let { date, page = 1, limit = 50 } = req.query; 
+
+        if (!date) {
+            return res.status(400).json({ message: "Date is required." });
+        }
+        date = new Date(date);
+        let startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+        let endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+        const totalCount = await punch.countDocuments({
+            IN_TIME: { $gte: startOfMonth, $lt: endOfMonth }
+        });
+
+        const userPunches = await punch.find({
+            IN_TIME: { $gte: startOfMonth, $lt: endOfMonth }
+        })
+        .skip((page - 1) * limit) 
+        .limit(parseInt(limit))
+        .sort({ IN_TIME: 1 });
+
+        if (!userPunches || userPunches.length === 0) {
+            return res.status(200).json({ user: "No users present in the selected month." });
+        }
+
+        let users = [];
+        for (const userPunch of userPunches) {
+            let customer = await Customer.findOne({ ID: userPunch.CUSTOMER_PROFILE_ID });
+            if (customer) {
+                users.push({
+                    ID: customer.ID,
+                    NAME: customer.NAME,
+                    PHONE: customer.PHONE,
+                    IN_TIME: userPunch.IN_TIME,
+                    OUT_TIME: userPunch.OUT_TIME
+                });
+            }
+        }
+        return res.status(200).json({
+            total: totalCount,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            user: users
+        });
+    } catch (err) {
+        console.error("Error fetching monthly attendance:", err);
+        return res.status(500).json({ user: "Internal Server Error", err: err });
+    }
+};
+
 
 exports.attendAt = async(req,res) => {
 
