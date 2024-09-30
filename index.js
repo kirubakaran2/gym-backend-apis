@@ -6,7 +6,7 @@ const fs = require("fs")
 const app = express()
 const {createUser, userList, user, userSearch, nonactive, active, edit, Admindashboard} = require('./Router/customer')
 const {db} = require("./Router/database")
-const {attendAt} = require("./Router/attendance")
+const {attendAt,monthlyAttendance,eveningAttendance,morningAttendance} = require("./Router/attendance")
 const { intime,outTime, getIn, getOut, attendance } = require("./Router/punch")
 const {paymentAt, payment,paymentOf, paymentEdit, delPay, paymentOfAll} = require("./Router/payment")
 const {login, admin} = require("./Router/authentication")
@@ -78,6 +78,10 @@ app.get("/image/:filename", (req,res) => {
 
 // Attendance APIs
 app.post("/admin/attendance", authAdmin, attendAt)
+app.get("/admin/attendance/monthly", authAdmin,monthlyAttendance)
+app.get("/admin/attendance/morning", authAdmin,morningAttendance)
+app.get("/admin/attendance/evening", authAdmin,eveningAttendance)
+
 
 // Punch In/Out
 app.post("/admin/time/in", authAdmin, intime )
